@@ -4,12 +4,15 @@
 	
 	newline_char: 		.byte '\n'
 	nil_char: 		.byte '\0'
-	string: 		.space 21
+	separator_char:		.byte '`'
+	char:	 		.space 1
+	string:			.space 10
 	txt_file_name: 		.space 15
 	dict_file_name:		.space 15
 	dict_file_extension: 	.asciiz ".dic"
 	LZW_file_name:		.space 15
 	LZW_file_extension: 	.asciiz ".lzw"
+	dictionary_index_to_s:	.space 32
 	
 
 .text
@@ -17,6 +20,7 @@
 # $s0 = TXT FILE DESCRIPTOR 
 # $s1 = DICTIONARY FILE DESCRIPTOR 
 # $s2 = LZW FILE DESCRIPTOR 
+# $s3 = DICTIONARY INDEX
 
 ask_file_name:
       	la $a0,ask_string # load and print string asking for file name
@@ -129,27 +133,121 @@ create_and_open_LZW_file:
  	# IF STRING IS IN DICTIONARY, GOTO L1
  	# IF NOT, PUT STRING IN DICTIONARY WITH ITS INDEX
  	
+	move $fp, $sp # saving heap start
+	addi $s3, $zero, -1 # INIT INDEX DICTIONARY
+	
 
-read_from_file:
-    	move $a0, $s0  # file descriptor in $a0
-    	li $v0, 14 # read from file
-    	la $a1, string # string we're writing in file
-	li $a2, 20
-    	syscall
-    	
-print_to_console:
-        li $v0,4 # write to console
-        la $a0, string # string to write
-        syscall
+read_one_char_from_txt_file:
+	li $v0, 14 # read from file
+	move $a0, $s0 # txt file descriptor
+	la $a1, char # read char
+	li $a2, 1
+	syscall
+
+
+store_char_on_heap:
+	lb $t0, char # $t0 = char
+	addi $sp, $sp, -1 # open space for one char
+	sb $t0, 0($sp)
+	
+	#
+	# FIND CHAR ON DICTIONARY. 
+	#	# IF FOUND, GET ONE MORE. 
+	#	# IF NOT, ADD TO DICTIONARY.
+	#
+print_index_to_dic:
+	addi $s3, $s3, 123   	# INDEX DICTIONARY++
+	add   $a0, $zero, $s3
+	jal  itoa
+	move $a1, $v0 		# save string we're writing
+	jal get_string_size
+  	move   $a2, $v0		# save string size to number of elements we're writing
+  	li   $v0, 15       	# write to file
+  	move $a0, $s1     	 # file descriptor 
+  	syscall
+  	
+print_separator_to_dic:
+  	li   $v0, 15       	# write to file 	
+  	move $a0, $s1		# file descriptor
+  	la $a1, separator_char  # get separator char to write
+  	addi $a2, $zero, 1	# number of chars to write
+  	syscall
+	j reverse
+
+itoa:
+      la   $t0, dictionary_index_to_s    # load string address
+      add  $t0, $t0, 30   # seek the end
+      sb   $0, 1($t0)     # null-terminated str
+      li   $t1, '0'  
+      sb   $t1, ($t0)     # init. with ascii 0
+      li   $t3, 10        # preload 10
+      beqz  $a0, itoa_end  # end if 0
+itoa_loop:
+      div  $a0, $t3       # a /= 10
+      mflo $a0
+      mfhi $t4            # get remainder
+      add  $t4, $t4, $t1  # convert to ASCII digit
+      sb   $t4, ($t0)     # store it
+      sub  $t0, $t0, 1    # dec. buf ptr
+      bnez  $a0, itoa_loop  # if not zero, loop
+      addi $t0, $t0, 1    # adjust buf ptr
+itoa_end:
+      move $v0, $t0      # return the addr.
+      jr   $ra           # of the string
+      
+get_string_size:
+	la $t0, 0($v0) # get string
+	add $v0, $zero, $zero
+	j loop_string_size
+
+loop_string_size:
+	lb $t2, 0($t0)
+	beqz $t2, return_string_size # return string size
+	addi $v0, $v0, 1 # string size++
+	addi $t0, $t0, 1 # increment string index
+	j loop_string_size
+	
+return_string_size:
+	jr $ra
+
+
+	
+reverse:
+	sub 	$t1, $fp, $sp
+	li	$t0, 0			# Set t0 to zero
+	li	$t3, 0			# and the same for t3
+	add	$t2, $zero, $sp		# $t2 is base of $sp	
+	
+reverse_loop:	
+	add	$t3, $t2, $t0		# $t2 is the base address for our 'input' array, add loop index
+	lb	$t4, 0($t3)		# load a byte at a time according to counter
+	beqz	$t4, write_heap_string_to_dic # We found the null-byte
+	sb	$t4, string($t1)		# Overwrite this byte address in memory	
+	subi	$t1, $t1, 1		# Subtract our overall string length by 1 (j--)
+	addi	$t0, $t0, 1		# Advance our counter (i++)
+	j	reverse_loop		# Loop until we reach our condition
+	
+write_heap_string_to_dic:
+  	li   $v0, 15       # write to file
+  	move $a0, $s1      # file descriptor 
+  	la   $a1, string   # address of buffer from which to write
+  	addi $a1, $a1, 1   # getting string without \0
+  	sub  $a2, $fp, $sp # string length
+  	syscall            # write to file
+
 
 txt_file_close:
 	move $a0, $s0  # file descriptor in $a0
     	li $v0, 16  # $a0 already has the txt file descriptor
     	syscall
-    	j end_program
     	
 dictionary_file_close:
 	move $a0, $s1  # file descriptor in $a0
+    	li $v0, 16  # $a0 already has the dictionary file descriptor
+    	syscall
+    	
+LZW_file_close:
+	move $a0, $s2  # file descriptor in $a0
     	li $v0, 16  # $a0 already has the dictionary file descriptor
     	syscall
     	j end_program

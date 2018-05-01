@@ -1,6 +1,6 @@
 .data
 	file:	   .asciiz "test.txt"
-	dictio:    .asciiz "1`abc\n2`defi\n3`defi\n4`a\n" 	#in the format: INDEX ` STRING \n
+	dictio:    .asciiz "1`ba\n2`abc\n3`abc\n4`abc\n" 	#in the format: INDEX ` STRING \n
 	string:    .space  4					#remember to always put string_length + 1 for \0
 	space:     .asciiz " "
 	enter:     .asciiz "\n"
@@ -56,21 +56,21 @@ compare_strings:
 	lb   $t3, string($t1)		#loads the $t1-nth character of string to $t3
 	
 	#######################
-	#li $v0, 1			#this area will show all the comparisons it makes between $t2 and $t3
-	#add $a0, $t2, $zero
-	#syscall
+	li $v0, 1			#this area will show all the comparisons it makes between $t2 and $t3
+	add $a0, $t2, $zero
+	syscall
 	
-	#li $v0, 4
-	#la $a0, space
-	#syscall
+	li $v0, 4
+	la $a0, space
+	syscall
 	
-	#li $v0, 1
-	#add $a0, $t3, $zero
-	#syscall
+	li $v0, 1
+	add $a0, $t3, $zero
+	syscall
 	
-	#li $v0, 4
-	#la $a0, enter
-	#syscall
+	li $v0, 4
+	la $a0, enter
+	syscall
 	#######################
 	
 	beq  $t2, 10, compare_ends		#if the next character is already \n, go to compare ends
