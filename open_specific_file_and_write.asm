@@ -12,7 +12,8 @@
 	dict_file_extension: 	.asciiz ".dic"
 	LZW_file_name:		.space 15
 	LZW_file_extension: 	.asciiz ".lzw"
-	dictionary_index_to_s:	.space 32
+	integer_to_s:		.space 32
+	dict_empty_string:	.asciiz "0.\n"
 	
 .text
 
@@ -22,6 +23,7 @@
 # $s3 = DICTIONARY INDEX
 # $s4 = 1 IF READ CHAR FROM TXT. 0 IF EOF.
 
+# $s6 = TEMPORARY $ra
 # $s7 = TXT FILE NAME LENGTH
 
 ask_file_name:
@@ -81,12 +83,31 @@ add_dictionary_file_extension:
 	li $t1, 0
 
 loop_dictionary_file_extension:
-	bge $t1, 4, open_read_only_dictionary_file
+	bge $t1, 4, create_and_write_dictionary_file
 	lb $t2, dict_file_extension($t1)
 	sb $t2, 0($t0)
 	addi $t0, $t0, 1
 	addi $t1, $t1, 1
 	j loop_dictionary_file_extension
+	
+create_and_write_dictionary_file:
+	li $v0, 13 # open file
+    	la $a0, dict_file_name
+    	li $a1, 1 # write-only with create
+	li $a2, 0 # ignoring mode
+    	syscall  # File descriptor gets returned in $v0	
+    	move $s1, $v0 # file descriptor saved in $s1
+
+	li $v0, 15 # write to file
+    	move $a0, $s1			# file descriptor
+    	la $a1, dict_empty_string # writing "0.\n" to dictionary
+	li $a2, 3
+    	syscall  # File descriptor gets returned in $v0	
+	
+closing_created_dictionary_file:
+	move $a0, $s1  	# file descriptor in $a0
+    	li $v0, 16  	# $a0 already has the dictionary file descriptor
+    	syscall	
     	
 open_read_only_dictionary_file:
 	li $v0, 13 # open file
@@ -134,7 +155,7 @@ create_and_open_LZW_file:
  	# IF NOT, PUT STRING IN DICTIONARY WITH ITS INDEX
  	
 	move $fp, $sp # saving heap start
-	addi $s3, $zero, -1 # INIT INDEX DICTIONARY
+	add $s3, $zero, $zero # INIT INDEX DICTIONARY
 	
 
 read_one_char_from_txt_file:
@@ -145,6 +166,18 @@ read_one_char_from_txt_file:
 	syscall
 	move $s4, $v0
 	beqz $s4, txt_file_close
+
+reset_dictionary_pointer:
+	move $a0, $s1  # file descriptor in $a0
+    	li $v0, 16  # $a0 already has the dictionary file descriptor
+    	syscall
+    	
+ 	li $v0, 13 # open file
+    	la $a0, dict_file_name
+    	li $a1, 0 # read-only
+    	li $a2, 0 # ignoring mode
+    	syscall  # File descriptor gets returned in $v0
+    	move $s1, $v0 # file descriptor saved in $s1	
 
 store_char_on_heap:
 	lb $t0, char # $t0 = char
@@ -169,6 +202,35 @@ reverse_loop:
 is_string_on_dictionary:
 	jal find_string_on_dictionary
 	beq $v1, 1, read_one_char_from_txt_file # if found, get one char more
+	
+write_to_LZW:
+
+print_index_to_LZW:
+	add   $a0, $zero, $s5
+	jal  itoa
+	move $a1, $v0 		# save string we're writing
+	jal get_string_size
+  	move   $a2, $v0		# save string size to number of elements we're writing
+  	li   $v0, 15       	# write to file
+  	move $a0, $s2     	 # file descriptor 
+  	syscall
+  	
+print_separator_to_LZW:
+  	li   $v0, 15       	# write to file 	
+  	move $a0, $s2		# file descriptor
+  	la $a1, separator_char  # get separator char to write
+  	addi $a2, $zero, 1	# number of chars to write
+  	syscall
+  	
+print_char_to_LZW:
+  	li   $v0, 15       	# write to file 	
+  	move $a0, $s2		# file descriptor
+  	la $a1, 0($sp)		# get separator char to write
+  	addi $a2, $zero, 1	# number of chars to write
+  	syscall
+  	
+reset_$s5:
+	add $s5, $zero, $zero
 
 close_dictionary_from_reading:
 	move $a0, $s1  # file descriptor in $a0
@@ -184,9 +246,10 @@ open_dictionary_for_writing:
     	move $s1, $v0 # file descriptor saved in $s1
     	
 add_string_to_dic:
-	la $s6, 60($ra) # get line 197: j read_one_char_from_txt_file
+	jal label_to_save_$ra_value		# $ra = next line
+	la $s6, 12($ra) 				# saving $ra value on $s6
 	j print_index_to_dic
-	
+
 close_dictionary_from_writing:
 	move $a0, $s1  # file descriptor in $a0
     	li $v0, 16  # $a0 already has the dictionary file descriptor
@@ -227,17 +290,20 @@ clean_comparison_string:
 #	$t2 -> string address, used for comparing a char from string	# we pass this return through $v1.
 #	$t3 -> char from string on $t3 address				#
 #	$t4 -> dictionary_EOF?						#
+#	$t5 -> index of dictionary string being compared		#
 #	$v1 -> return if string was found in dictionary			#
 #########################################################################
 
 find_string_on_dictionary:
-	add  $v1, $zero, $zero		# reset $v1 that will count how many strings are the same
+	add $v1, $zero, $zero		# reset $v1 that will count how many strings are the same
+	addi $t5, $zero, -1		# reset $t5 that will count index of dictionary string
 
-compare_dictionary:
+compare_dictionary_line:
 	add  $t0, $zero, $zero		# resets $t0
-	la  $t2, string			# resets $t1 to string address
+	la  $t2, string			# resets $t2 to string address
 	addi $t2, $t2, 1		# get first element from string
 	sb $0, char			# reset char as nil
+	addi $t5, $t5, 1		# dictionary index++
 	
 read_one_char_from_dictionary:
 	li $v0, 14 			# read from file
@@ -247,10 +313,14 @@ read_one_char_from_dictionary:
 	syscall
 	
 compare_separator:
-	lb $t1, char				# $t2 = char from dictionary
-	beqz $t1, comparing_ends		#if $t2 is \0, then the dictionary ended, so it'll exit
-	beq  $t1, 46, compare_strings		#if the character is equal to '.', then it will compare the strings
+	beqz $v0, comparation_ends		# didn't read any chars, get EOF and end comparation
+	lb $t1, char				# $t1 = char from dictionary
+	beqz $t1, comparation_ends		#if $t1 is \0, then the dictionary ended, so it'll exit
+	beq  $t1, 46, is_dictionary_first_line	#if the character is equal to '.', then it will compare the strings
 	j    read_one_char_from_dictionary	#if not, it will continue looking for the '.' separator
+	
+is_dictionary_first_line:
+	beqz $t5, compare_dictionary_line	# if dictionary index is 1, we're at first line. if char 
 	
 compare_strings:
 	addi $t0, $t0, 1 		# set has_passed_separator? to true
@@ -270,21 +340,25 @@ load_char_from_dictionary:
 
 check_if_chars_are_equal:	
 	beq $t1, $t3, load_char_from_string	# load new chars while chars are equal
-	beqz $t3, comparing_ends		# if we found last char from string (nil char = 0), then we have found the string
+	beqz $t3, save_dictionary_index		# if we found last char from string (nil char = 0), then we have found the string
 	add $t0, $zero, $zero			# did not find string in this line of dictionary
-	beqz $t4, comparing_ends		# if EOF, exit comparation and return $v1 as false
+	beqz $t4, comparation_ends		# if EOF, exit comparation and return $v1 as false
 	
+	beq $t1, 10, compare_dictionary_line 	# if is equal to newline (10 in ASCII), start all over
 read_dictionary_until_newline:
-	li $v0, 14 			# read from file
-	move $a0, $s1 			# dictionary file descriptor
-	la $a1, char			# read char
+	li $v0, 14 				# read from file
+	move $a0, $s1 				# dictionary file descriptor
+	la $a1, char				# read char
 	li $a2, 1
 	syscall
-	lb $t1, char			# $t1 = char from dictionary
-	beq $t1, 10, compare_dictionary # if is equal to newline (10 in ASCII), start all over
-	j read_dictionary_until_newline # if not, keep on reading chars from dictionary
-	
-comparing_ends:
+	lb $t1, char				# $t1 = char from dictionary
+	beq $t1, 10, compare_dictionary_line 	# if is equal to newline (10 in ASCII), start all over
+	j read_dictionary_until_newline		# if not, keep on reading chars from dictionary
+
+save_dictionary_index:
+	move $s5, $t5
+
+comparation_ends:
 	move $v1, $t0
 	jr $ra
 	
@@ -327,7 +401,7 @@ print_newline_to_dic:
 	jr $s6
 
 itoa:
-      la   $t0, dictionary_index_to_s    # load string address
+      la   $t0, integer_to_s    # load string address
       add  $t0, $t0, 30   # seek the end
       sb   $0, 1($t0)     # null-terminated str
       li   $t1, '0'  
@@ -361,7 +435,12 @@ loop_string_size:
 	
 return_string_size:
 	jr $ra
-
+	
+#
+# UTILS
+#
+label_to_save_$ra_value:
+	jr $ra
 
 txt_file_close:
 	move $a0, $s0  # file descriptor in $a0
