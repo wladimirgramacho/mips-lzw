@@ -1,3 +1,7 @@
+############################################
+############# LZW FILE ENCODER #############
+############################################
+
 .data
 	ask_string:  		.asciiz "Enter file name (max 15 chars): "
 	file_not_found: 	.asciiz "Error: file not found"
