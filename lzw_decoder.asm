@@ -15,6 +15,7 @@
 	NEW_file_begin:		.asciiz "new_"
 	NEW_file_name:		.space 18
 	NEW_file_extension: 	.asciiz ".txt"
+	string:			.space 40
 	
 .text
 
@@ -227,6 +228,28 @@ store_char_on_heap:
 	
 dictio_string_found:
 
+reverse_string:
+	sub 	$t1, $fp, $sp
+	li	$t0, 0			# Set t0 to zero
+	li	$t3, 0			# and the same for t3
+	add	$t2, $zero, $sp		# $t2 is base of $sp
+	add	$t5, $zero, $fp		# $t5 is the crosser of $sp
+	addi    $t2, $t2, 1
+
+reverse_loop:	
+	add	$t3, $t2, $t0		# $t2 is the base address for our 'input' array, add loop index
+	lb	$t4, 0($t3)		# load a byte at a time according to counter
+	beqz	$t4, printatoa		# We found the null-byte
+	sb	$t4, 0($t5)		# Overwrite this byte address in memory	
+	subi	$t1, $t1, 1		# Subtract our overall string length by 1 (j--)
+	addi	$t0, $t0, 1		# Advance our counter (i++)
+	addi    $t5, $t5, -1		
+	j	reverse_loop		# Loop until we reach our condition
+	
+printatoa:
+	li $v0, 4
+	la $a0, 0($sp)
+	syscall
 
 get_character_from_lzw:					#the next char is the character to be concatenated
  	li $v0, 14 					# read char from file
