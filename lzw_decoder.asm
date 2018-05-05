@@ -290,6 +290,7 @@ get_character_from_lzw:					#the next char is the character to be concatenated
 	la $a1, char					# read char
 	li $a2, 1
 	syscall
+	beqz $v0, end_program
 	
 writing_character_from_lzw_to_output:
 	li   $v0, 15					# write on file code
