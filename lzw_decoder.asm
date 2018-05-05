@@ -8,6 +8,7 @@
 	lzw_file_name: 		.space 15
 	dict_file_name:		.space 15
 	dict_file_extension: 	.asciiz ".dic"
+	grave_char:		.byte '`'
 	newline_char: 		.byte '\n'
 	nil_char: 		.byte '\0'
 	char:			.byte '\0'
@@ -227,7 +228,7 @@ count_separators_loop:
 	
 	lb  $t0, char					# $t0 receives the character from dictio
 	beq $t0, '.', is_inside_string			# if $t0 is equal to '.' then $t1++
-	beq $t0, '\n', set_inside_string_to_false	
+	beq $t0, '`', set_inside_string_to_false	
 	j   count_separators_loop			# if not, keep looking
 
 set_inside_string_to_false:
@@ -252,7 +253,7 @@ index_has_been_found:					# the next char is no longer index or separator
 	
 store_char_on_heap:	
 	lb   $t0, char					# $t0 receives the character of the string from dictio
-	beq  $t0, '\n', dictio_string_found		# if $t0 is equal to '\n' then we have all the string 
+	beq  $t0, '`', dictio_string_found		# if $t0 is equal to '`' then we have all the string 
 	addi $sp, $sp, -1 				# open space for one char
 	sb   $t0, 0($sp)				# stores character on heap
 	j    index_has_been_found			

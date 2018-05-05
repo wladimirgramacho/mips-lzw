@@ -7,6 +7,7 @@
 	file_not_found: 	.asciiz "Error: file not found"
 	
 	newline_char: 		.byte '\n'
+	grave_char:		.byte '`'
 	nil_char: 		.byte '\0'
 	separator_char:		.byte '.'
 	char:	 		.space 1
@@ -17,7 +18,7 @@
 	LZW_file_name:		.space 15
 	LZW_file_extension: 	.asciiz ".lzw"
 	integer_to_s:		.space 32
-	dict_empty_string:	.asciiz "0.\n"
+	dict_empty_string:	.asciiz "0.`"
 	
 .text
 
@@ -349,7 +350,7 @@ check_if_chars_are_equal:
 	add $t0, $zero, $zero			# did not find string in this line of dictionary
 	beqz $t4, comparation_ends		# if EOF, exit comparation and return $v1 as false
 	
-	beq $t1, 10, compare_dictionary_line 	# if is equal to newline (10 in ASCII), start all over
+	beq $t1, 96, compare_dictionary_line 	# if is equal to ` (96 in ASCII), start all over
 read_dictionary_until_newline:
 	li $v0, 14 				# read from file
 	move $a0, $s1 				# dictionary file descriptor
@@ -357,7 +358,7 @@ read_dictionary_until_newline:
 	li $a2, 1
 	syscall
 	lb $t1, char				# $t1 = char from dictionary
-	beq $t1, 10, compare_dictionary_line 	# if is equal to newline (10 in ASCII), start all over
+	beq $t1, 96, compare_dictionary_line 	# if is equal to ` (96 in ASCII), start all over
 	j read_dictionary_until_newline		# if not, keep on reading chars from dictionary
 
 save_dictionary_index:
@@ -400,7 +401,7 @@ print_string_to_dic:
 print_newline_to_dic:
   	li   $v0, 15       	# write to file 	
   	move $a0, $s1		# file descriptor
-  	la $a1, newline_char	# get '\n' char to write
+  	la $a1, grave_char	# get '`' char to write
   	addi $a2, $zero, 1	# number of chars to write
   	syscall	
 	jr $s6
