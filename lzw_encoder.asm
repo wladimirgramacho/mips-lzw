@@ -3,7 +3,7 @@
 ############################################
 
 .data
-	ask_string:  		.asciiz "Enter file name (max 15 chars): "
+	ask_string:  		.asciiz "Enter txt file name to encode (max 15 chars): "
 	file_not_found: 	.asciiz "Error: file not found"
 	
 	line_separator:		.byte '`'

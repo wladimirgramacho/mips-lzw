@@ -3,12 +3,11 @@
 ############################################
 
 .data
-	ask_string:  		.asciiz "Enter LZW file name (max 15 chars): "
+	ask_string:  		.asciiz "Enter LZW file name to decode (max 15 chars): "
 	file_not_found: 	.asciiz "Error: file not found"
 	lzw_file_name: 		.space 15
 	dict_file_name:		.space 15
 	dict_file_extension: 	.asciiz ".dic"
-	grave_char:		.byte '`'
 	newline_char: 		.byte '\n'
 	nil_char: 		.byte '\0'
 	char:			.byte '\0'
