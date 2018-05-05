@@ -8,6 +8,7 @@
 	lzw_file_name: 		.space 15
 	dict_file_name:		.space 15
 	dict_file_extension: 	.asciiz ".dic"
+	grave_char:		.byte '`'
 	newline_char: 		.byte '\n'
 	nil_char: 		.byte '\0'
 	char:			.byte '\0'
