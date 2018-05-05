@@ -161,6 +161,7 @@ create_and_open_LZW_file:
 	move $fp, $sp # saving heap start
 	add $s3, $zero, $zero # INIT INDEX DICTIONARY
 	add $t9, $zero, $zero # reset EOF flag
+	addi $t5, $zero, -1		# reset $t5 that will count index of dictionary string
 
 read_one_char_from_txt_file:
 	li $v0, 14 # read from file
@@ -169,19 +170,7 @@ read_one_char_from_txt_file:
 	li $a2, 1
 	syscall
 	move $s4, $v0
-	beqz $s4, comparison_string_present			# if didn't get any chars, check if there's a string to write in dic
-
-reset_dictionary_pointer:
-	move $a0, $s1  # file descriptor in $a0
-    	li $v0, 16  # $a0 already has the dictionary file descriptor
-    	syscall
-    	
- 	li $v0, 13 # open file
-    	la $a0, dict_file_name
-    	li $a1, 0 # read-only
-    	li $a2, 0 # ignoring mode
-    	syscall  # File descriptor gets returned in $v0
-    	move $s1, $v0 # file descriptor saved in $s1	
+	beqz $s4, comparison_string_present			# if didn't get any chars, check if there's a string to write in dic	
 
 store_char_on_heap:
 	lb $t0, char # $t0 = char
@@ -206,6 +195,7 @@ reverse_loop:
 is_string_on_dictionary:
 	jal find_string_on_dictionary
 	beq $v1, 1, read_one_char_from_txt_file # if found, get one char more
+	addi $t5, $zero, -1		# reset $t5 that will count index of dictionary string
 	
 write_to_LZW:
 
@@ -301,7 +291,6 @@ clean_comparison_string:
 
 find_string_on_dictionary:
 	add $v1, $zero, $zero		# reset $v1 that will count how many strings are the same
-	addi $t5, $zero, -1		# reset $t5 that will count index of dictionary string
 
 compare_dictionary_line:
 	add  $t0, $zero, $zero		# resets $t0
