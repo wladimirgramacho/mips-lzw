@@ -148,9 +148,10 @@ create_and_open_NEW_file:
 
 	move $fp, $sp # saving heap start
 
-reset_index:
+reset_to_new_read:
 	add  $s2, $zero, $zero				# preparing $s2 for the index
 	la   $t3, index_string				# $t3 stores the adress across index_string
+	move $sp, $fp
 
 read_char_from_lzw:
 	li $v0, 14 					# read char from file
@@ -158,7 +159,9 @@ read_char_from_lzw:
 	la $a1, char					# read char
 	li $a2, 1
 	syscall
-
+	
+	beqz $v0, end_program 				# if it reaches the end of the file, go to the end
+	
 	lb   $t0, char					# loading the read char to $t0
 	beq  $t0, '.', ascii_to_integer			# if the char is '.', then the index ended
 	sb   $t0, ($t3)					# if it's part of the index, save it to index_string
@@ -228,27 +231,29 @@ store_char_on_heap:
 	
 dictio_string_found:
 
-reverse_string:
+reverse_string:	##corrigir
 	sub 	$t1, $fp, $sp
-	li	$t0, 0			# Set t0 to zero
-	li	$t3, 0			# and the same for t3
-	add	$t2, $zero, $sp		# $t2 is base of $sp
-	add	$t5, $zero, $fp		# $t5 is the crosser of $sp
-	addi    $t2, $t2, 1
+	li	$t0, 0					# Set t0 to zero
+	li	$t3, 0					# and the same for t3
+	add	$t2, $zero, $sp				# $t2 is base of $sp
+	add	$t5, $zero, $fp				# $t5 is the crosser of $sp
 
 reverse_loop:	
-	add	$t3, $t2, $t0		# $t2 is the base address for our 'input' array, add loop index
-	lb	$t4, 0($t3)		# load a byte at a time according to counter
-	beqz	$t4, printatoa		# We found the null-byte
-	sb	$t4, 0($t5)		# Overwrite this byte address in memory	
-	subi	$t1, $t1, 1		# Subtract our overall string length by 1 (j--)
-	addi	$t0, $t0, 1		# Advance our counter (i++)
+	add	$t3, $t2, $t0				# $t2 is the base address for our 'input' array, add loop index
+	lb	$t4, 0($t3)				# load a byte at a time according to counter
+	beqz	$t4, printatoa				# We found the null-byte
 	addi    $t5, $t5, -1		
-	j	reverse_loop		# Loop until we reach our condition
+	sb	$t4, 0($t5)				# Overwrite this byte address in memory	
+	addi	$t0, $t0, 1				# Advance our counter (i++)
+	j	reverse_loop				# Loop until we reach our condition
 	
 printatoa:
-	li $v0, 4
-	la $a0, 0($sp)
+	
+writing_dictio_string_to_output:
+	li   $v0, 15					# write on file code
+	move $a0, $s3					# new_file.txt descriptor 
+	la   $a1, 0($sp)				# string adress on heap
+	move $a2, $t1					# $t1 already have the max size of the string (fp-sp)
 	syscall
 
 get_character_from_lzw:					#the next char is the character to be concatenated
@@ -257,7 +262,16 @@ get_character_from_lzw:					#the next char is the character to be concatenated
 	la $a1, char					# read char
 	li $a2, 1
 	syscall
- 	
+	
+writing_character_from_lzw_to_output:
+	li   $v0, 15					# write on file code
+	move $a0, $s3					# new_file.txt descriptor 
+	la   $a1, char					# character adress
+	li   $a2, 1					# only one character
+	syscall
+	
+	j reset_to_new_read
+	 	 	
 ##################
 
 	j end_program
