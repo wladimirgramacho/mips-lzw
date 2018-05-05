@@ -6,7 +6,8 @@
 	ask_string:  		.asciiz "Enter file name (max 15 chars): "
 	file_not_found: 	.asciiz "Error: file not found"
 	
-	newline_char: 		.byte '\n'
+	line_separator:		.byte '`'
+	newline_char:		.byte '\n'
 	nil_char: 		.byte '\0'
 	separator_char:		.byte '.'
 	char:	 		.space 1
@@ -17,7 +18,7 @@
 	LZW_file_name:		.space 15
 	LZW_file_extension: 	.asciiz ".lzw"
 	integer_to_s:		.space 32
-	dict_empty_string:	.asciiz "0.\n"
+	dict_empty_string:	.asciiz "0.`"
 	
 .text
 
@@ -47,7 +48,7 @@ get_file_name:
 	# _____________________ #
 
        	la $t0, txt_file_name
- 	lb $t2, newline_char # save \n for comparison
+ 	lb $t2, newline_char	 # save '\n' for comparison
  	lb $t3, nil_char # save \0 for string cleaning
 while_not_newline:
        	lb   $t1, 0($t0)
@@ -104,7 +105,7 @@ create_and_write_dictionary_file:
 
 	li $v0, 15 # write to file
     	move $a0, $s1			# file descriptor
-    	la $a1, dict_empty_string # writing "0.\n" to dictionary
+    	la $a1, dict_empty_string # writing "0.`" to dictionary
 	li $a2, 3
     	syscall  # File descriptor gets returned in $v0	
 	
@@ -280,7 +281,7 @@ clean_comparison_string:
 ###################################Comparison begins###################################
 
 #########################################################################
-#	$t0 -> has passed separator? separator is '.'			# if we find '\n' and $t0 is true, we have found
+#	$t0 -> has passed separator? separator is '.'			# if we find '`' and $t0 is true, we have found
 #	$t1 -> temporarily store char from dictionary			# the string in the dictionary.
 #	$t2 -> string address, used for comparing a char from string	# we pass this return through $v1.
 #	$t3 -> char from string on $t3 address				#
@@ -338,16 +339,16 @@ check_if_chars_are_equal:
 	add $t0, $zero, $zero			# did not find string in this line of dictionary
 	beqz $t4, comparation_ends		# if EOF, exit comparation and return $v1 as false
 	
-	beq $t1, 10, compare_dictionary_line 	# if is equal to newline (10 in ASCII), start all over
-read_dictionary_until_newline:
+	beq $t1, '`', compare_dictionary_line 	# if is equal to '`', start all over
+read_dictionary_until_line_separator:
 	li $v0, 14 				# read from file
 	move $a0, $s1 				# dictionary file descriptor
 	la $a1, char				# read char
 	li $a2, 1
 	syscall
 	lb $t1, char				# $t1 = char from dictionary
-	beq $t1, 10, compare_dictionary_line 	# if is equal to newline (10 in ASCII), start all over
-	j read_dictionary_until_newline		# if not, keep on reading chars from dictionary
+	beq $t1, '`', compare_dictionary_line 	# if is equal to '`', start all over
+	j read_dictionary_until_line_separator	# if not, keep on reading chars from dictionary
 
 save_dictionary_index:
 	move $s5, $t5
@@ -386,10 +387,10 @@ print_string_to_dic:
   	li   $v0, 15       	# write to file 
   	syscall
 
-print_newline_to_dic:
+print_line_separator_to_dic:
   	li   $v0, 15       	# write to file 	
   	move $a0, $s1		# file descriptor
-  	la $a1, newline_char	# get '\n' char to write
+  	la $a1, line_separator	# get '`' char to write
   	addi $a2, $zero, 1	# number of chars to write
   	syscall	
 	jr $s6
