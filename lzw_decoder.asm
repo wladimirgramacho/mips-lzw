@@ -151,8 +151,23 @@ create_and_open_NEW_file:
 reset_to_new_read:
 	add  $s2, $zero, $zero				# preparing $s2 for the index
 	la   $t3, index_string				# $t3 stores the adress across index_string
-	move $sp, $fp
 
+	lb $t0, nil_char
+clean_heap:
+	beq $sp, $fp, get_index_string_address
+	sb $t0, 0($sp)		# reset space to '\0' char
+	addi $sp, $sp, 1	# remove space from heap
+	j clean_heap
+
+get_index_string_address:
+	la $t7, index_string				# prepares the address of index_string
+clean_index_string:
+	lb $t6, 0($t7)					# get char from address
+	beqz $t6, read_char_from_lzw
+	sb $t0, 0($t7)					# store '\0' into string
+	addi $t7, $t7, 1
+	j clean_index_string
+	
 read_char_from_lzw:
 	li $v0, 14 					# read char from file
 	move $a0, $s0 					# lzw file descriptor
@@ -167,6 +182,9 @@ read_char_from_lzw:
 	sb   $t0, ($t3)					# if it's part of the index, save it to index_string
 	addi $t3, $t3, 1				# prepares the next address of index_string
 	j    read_char_from_lzw				# jump to read the next char in the index
+
+
+	
 
 ascii_to_integer:	
 	la $a1, index_string				# prepares the address of index_string
@@ -199,6 +217,7 @@ resets_dictionary:
 
 find_dictionary_index:
 	add $t1, $zero, $zero
+	add $t7, $zero, $zero				# boolean: true if inside string, false otherwise
 count_separators_loop:
 	li $v0, 14 					# read char from file
 	move $a0, $s1 					# dic file descriptor
@@ -207,9 +226,18 @@ count_separators_loop:
 	syscall
 	
 	lb  $t0, char					# $t0 receives the character from dictio
-	beq $t0, '.', add_to_separator_counter		# if $t0 is equal to '.' then $t1++
+	beq $t0, '.', is_inside_string			# if $t0 is equal to '.' then $t1++
+	beq $t0, '\n', set_inside_string_to_false	
 	j   count_separators_loop			# if not, keep looking
-	
+
+set_inside_string_to_false:
+	add $t7, $zero, $zero
+	j count_separators_loop
+
+is_inside_string:
+	beq $t7, 1, count_separators_loop
+	add $t7, $zero, 1				# set is_inside_string to false
+
 add_to_separator_counter:
 	beq $t1, $s2, index_has_been_found		# if, when dot's found, the counter is equal to index, end search
 	addi $t1, $t1, 1				# $t1++
@@ -231,20 +259,20 @@ store_char_on_heap:
 	
 dictio_string_found:
 
-reverse_string:	##corrigir
+reverse_string:	
 	sub 	$t1, $fp, $sp
 	li	$t0, 0					# Set t0 to zero
 	li	$t3, 0					# and the same for t3
-	add	$t2, $zero, $sp				# $t2 is base of $sp
-	add	$t5, $zero, $fp				# $t5 is the crosser of $sp
+	addi	$t2, $fp, -1				# $t2 is base of $sp
+	la 	$t5, string				# $t5 is the crosser of $sp
 
 reverse_loop:	
 	add	$t3, $t2, $t0				# $t2 is the base address for our 'input' array, add loop index
 	lb	$t4, 0($t3)				# load a byte at a time according to counter
 	beqz	$t4, printatoa				# We found the null-byte
-	addi    $t5, $t5, -1		
 	sb	$t4, 0($t5)				# Overwrite this byte address in memory	
-	addi	$t0, $t0, 1				# Advance our counter (i++)
+	addi    $t5, $t5, 1		
+	addi	$t0, $t0, -1				# Advance our counter (i++)
 	j	reverse_loop				# Loop until we reach our condition
 	
 printatoa:
@@ -252,7 +280,7 @@ printatoa:
 writing_dictio_string_to_output:
 	li   $v0, 15					# write on file code
 	move $a0, $s3					# new_file.txt descriptor 
-	la   $a1, 0($sp)				# string adress on heap
+	la   $a1, string				# string adress on heap
 	move $a2, $t1					# $t1 already have the max size of the string (fp-sp)
 	syscall
 

@@ -160,7 +160,7 @@ create_and_open_LZW_file:
  	
 	move $fp, $sp # saving heap start
 	add $s3, $zero, $zero # INIT INDEX DICTIONARY
-	
+	add $t9, $zero, $zero # reset EOF flag
 
 read_one_char_from_txt_file:
 	li $v0, 14 # read from file
@@ -169,7 +169,7 @@ read_one_char_from_txt_file:
 	li $a2, 1
 	syscall
 	move $s4, $v0
-	beqz $s4, txt_file_close
+	beqz $s4, comparison_string_present			# if didn't get any chars, check if there's a string to write in dic
 
 reset_dictionary_pointer:
 	move $a0, $s1  # file descriptor in $a0
@@ -225,6 +225,7 @@ print_separator_to_LZW:
   	la $a1, separator_char  # get separator char to write
   	addi $a2, $zero, 1	# number of chars to write
   	syscall
+  	beq $t9, 1, txt_file_close
   	
 print_char_to_LZW:
   	li   $v0, 15       	# write to file 	
@@ -445,6 +446,15 @@ return_string_size:
 #
 label_to_save_$ra_value:
 	jr $ra
+
+comparison_string_present:
+	beq $v1, 1, reset_$v1
+	j txt_file_close
+
+reset_$v1:
+	add $v1, $zero, $zero
+	addi $t9, $zero, 1
+	j write_to_LZW
 
 txt_file_close:
 	move $a0, $s0  # file descriptor in $a0
