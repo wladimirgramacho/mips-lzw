@@ -1,0 +1,92 @@
+This is the file GUTINDEX.2015
+
+Updated to December 31, 2015
+
+
+                         -=] INTRODUCTION [=-                           
+
+GUTINDEX.2015 is a plain text listing of eBooks posted to the Project
+Gutenberg collection between January 1, 2015 and December 31, 2015
+with eBook numbers starting with 47837 and ending with 50814.
+
+It is not a database, but it is useful for identifying eBooks so that
+they can be downloaded or read online.
+
+See the file GUTINDEX.ALL for all Project Gutenberg eBooks.
+
+For a detailed explanation of Project Gutenberg files and filenaming
+procedures, refer to the file GUTINDEX.ALL.
+
+           .:: HOW TO GET EBOOKS FROM PROJECT GUTENBERG ::.            
+
+The easiest way to obtain our eBooks is via our search page at
+
+       http://www.gutenberg.org/catalog/world/search
+
+which allows searching by title, author, eBook number, language
+and other bibliographic data.
+
+Or, you might prefer:
+
+        http://www.gutenberg.org/ebooks/
+
+or even:
+
+        http://www.gutenberg.org/browse/authors/a
+
+Or, the Site Map to Project Gutenberg:
+
+        http://www.gutenberg.org/
+
+To download an eBook to your mobile device this page may prove helpful:
+
+ http://www.gutenberg.org/wiki/Gutenberg:MobileReader_Devices_How-To
+
+Mirrors (copies) of the complete collection are available around the
+world, and you can select one nearer to your location from the link on
+the search results page.
+
+To see a listing of mirror sites, and locate the one nearest to you,
+visit:
+
+    http://www.gutenberg.org/MIRRORS.ALL
+
++ - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
+
+                               --CORRECTIONS--
+
+To report an error in the listings below, please write to help2015@pglaf.org
+and include the word CORRECTION in the subject line.
+
+                               <==LISTINGS==>
+
+**** A "C" Following a Project Gutenberg eBook Number Indicates Copyright ****
+
+   **** The Language of the eBooks is English, unless otherwise noted ****
+
+To view ACCENT MARKS correctly set your browser view to unicode character encoding:
+
+                     VIEW > CHARACTER ENCODING > UNICODE
+
+~ ~ ~ ~ Posting Dates for the below eBooks:  1 Dec 2015 to 31 Dec 2015 ~ ~ ~ ~
+
+TITLE and AUTHOR                                                     ETEXT NO.
+
+Prize Money, by Philip Quincy Wright                                     50814
+
+Thibaut und Savigny, by Jacques Stern                                    50813
+ [Subtitle: Zum 100jährigen Gedächtnis
+  des Kampfes um ein einheitliches
+  bürgerliches Recht für Deutschland]
+ [Language: German]
+
+The story of my struggles: the memoirs of Arminius Vambéry, Vol. 1 of 2  50812
+
+What Happened at Quasi, by George Cary Eggleston and H. C. Edwards       50811
+ [Subtitle: The Story of a Carolina Cruise]
+
+Patience Worth, by Casper Salathiel Yost                                 50810
+ [Subtitle: A Psychic Mystery]
+
+Harper's Young People, December 27, 1881, by Various                     50809
+ [Subtitle: An Illus
