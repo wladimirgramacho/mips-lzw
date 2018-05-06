@@ -1,6 +1,17 @@
+############################################################################
+#									   #
+#  	   CURSO: Organização e Arquitetura de Computadores - CIC 116394   #
+# 	   GRUPO: Wladimir Gramacho & João Lucas da Cunha		   #
+#      MATRÍCULA: 15/0048718	 & 17/0013731				   #
+#  LABORATÓRIO 1: Codificação e Decodificação LZ78			   #
+#									   #
+############################################################################
+
+
 ############################################
 ############# LZW FILE ENCODER #############
 ############################################
+
 
 .data
 	ask_string:  		.asciiz "Enter txt file name to encode (max 15 chars): "
